@@ -43,6 +43,10 @@ jobs:
           . .venv/bin/activate
           pip install -r requirements.txt
           pytest -q
+      - name: Smoke test (compose up + gateway E2E)
+        run: |
+          chmod +x scripts/ci-smoke.sh
+          ./scripts/ci-smoke.sh
 name: CI
 on: [push, pull_request]
 
