@@ -1,11 +1,181 @@
 openapi: 3.1.0
-info: { title: ICN API, version: 0.1.0 }
-servers: [{ url: https://api.icn.local }]
+info:
+  title: InterCooperative Network API (Gateway)
+  version: 0.1.0
+servers:
+  - url: http://localhost:3000
+    description: Local dev
+  - url: https://api.intercooperative.network
+    description: Production
 paths:
-  /api/v1/proposals:
+  /api/health:
+    get:
+      summary: Aggregate health of downstream services
+      responses:
+        '200':
+          description: OK
+  /api/governance/health:
+    get:
+      summary: Governance engine health
+      responses:
+        '200': { description: OK }
+  /api/discovery/health:
+    get:
+      summary: Resource discovery health
+      responses:
+        '200': { description: OK }
+  /api/identity/health:
+    get:
+      summary: Identity service health
+      responses:
+        '200': { description: OK }
+
+  /api/proposals:
     post:
       summary: Create proposal
-      requestBody: { required: true }
-      responses: { '201': { description: Created } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProposalRequest'
+      responses:
+        '200':
+          description: Created proposal
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Proposal'
+
+  /api/proposals/{id}/vote:
+    post:
+      summary: Cast vote on proposal
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VoteRequest'
+      responses:
+        '200': { description: Vote recorded }
+
+  /api/proposals/{id}/results:
+    get:
+      summary: Get proposal results
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VotingResults'
+
+  /api/resources:
+    get:
+      summary: List resources
+      responses:
+        '200':
+          description: Resource list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  resources:
+                    type: array
+                    items: { $ref: '#/components/schemas/SharedResource' }
+                  total_count: { type: integer }
+    post:
+      summary: Register resource
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResourceRegistration'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedResource'
+
+components:
+  schemas:
+    ProposalRequest:
+      type: object
+      properties:
+        title: { type: string }
+        description: { type: string }
+        proposal_type: { type: string }
+        initiator_id: { type: string }
+        stakeholder_cooperatives:
+          type: array
+          items: { type: string }
+        related_event_id: { type: string, nullable: true }
+        voting_rules:
+          type: object
+      required: [title, description, initiator_id, stakeholder_cooperatives]
+    Proposal:
+      type: object
+      properties:
+        id: { type: string }
+        title: { type: string }
+        description: { type: string }
+        proposal_type: { type: string }
+        initiator_id: { type: string }
+        stakeholder_cooperatives:
+          type: array
+          items: { type: string }
+        voting_rules: { type: object }
+        status: { type: string }
+        created_at: { type: string, format: date-time }
+        voting_deadline: { type: string, format: date-time }
+    VoteRequest:
+      type: object
+      properties:
+        voter_id: { type: string }
+        vote_type: { type: string }
+        vote_weight: { type: number }
+        reasoning: { type: string }
+        delegate_to: { type: string }
+      required: [voter_id, vote_type]
+    VotingResults:
+      type: object
+      properties:
+        proposal_id: { type: string }
+        approve: { type: number }
+        reject: { type: number }
+        abstain: { type: number }
+        total_votes_cast: { type: number }
+        quorum_met: { type: boolean }
+        threshold_met: { type: boolean }
+        result: { type: string }
+    SharedResource:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        description: { type: string }
+        resourceType: { type: string }
+        ownerCooperativeId: { type: string }
+    ResourceRegistration:
+      type: object
+      properties:
+        name: { type: string }
+        resourceType: { type: string }
+        ownerCooperativeId: { type: string }
+        description: { type: string }
 
 

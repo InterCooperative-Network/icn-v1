@@ -1,6 +1,8 @@
 import Fastify from 'fastify';
+import { registerAuth } from './middleware/auth';
 
 const server = Fastify({ logger: true });
+registerAuth(server);
 
 // Downstream service URLs (can be overridden by environment)
 const GOVERNANCE_URL = process.env.GOVERNANCE_ENGINE_URL || 'http://localhost:8000';
