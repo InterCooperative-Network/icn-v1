@@ -1,10 +1,13 @@
-use axum::{routing::post, Router, Json};
+use axum::{http::HeaderMap, routing::get, routing::post, Json, Router};
 use serde::{Deserialize, Serialize};
 use chrono::{DateTime, Utc};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use uuid::Uuid;
+use once_cell::sync::Lazy;
+use std::collections::HashSet;
+use std::sync::Mutex;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 struct EconomicEvent {
     event_id: Uuid,
     event_type: String,
@@ -15,6 +18,27 @@ struct EconomicEvent {
     currency: String,
 }
 
+#[derive(Debug, Serialize)]
+struct Health { ok: bool }
+
+static IDEMPOTENCY_KEYS: Lazy<Mutex<HashSet<String>>> = Lazy::new(|| Mutex::new(HashSet::new()));
+
+fn validate_event(event: &EconomicEvent) -> Result<(), String> {
+    if event.participants.is_empty() {
+        return Err("participants must not be empty".to_string());
+    }
+    if event.amount_cents < 0 {
+        return Err("amount_cents must be non-negative".to_string());
+    }
+    let now = Utc::now();
+    let delta = now - event.timestamp;
+    let delta_abs = if delta.num_seconds() < 0 { -(delta.num_seconds()) } else { delta.num_seconds() };
+    if delta_abs > 30 * 24 * 60 * 60 {
+        return Err("timestamp must be within ±30 days".to_string());
+    }
+    Ok(())
+}
+
 #[tokio::main]
 async fn main() {
     tracing_subscriber::registry()
@@ -22,13 +46,31 @@ async fn main() {
         .with(tracing_subscriber::fmt::layer())
         .init();
 
-    let app = Router::new().route("/events/append", post(append_event));
+    let app = Router::new()
+        .route("/health", get(health))
+        .route("/events/append", post(append_event));
     let listener = tokio::net::TcpListener::bind(("0.0.0.0", 8081)).await.unwrap();
     tracing::info!("event-store listening on 8081");
     axum::serve(listener, app).await.unwrap();
 }
 
-async fn append_event(Json(evt): Json<EconomicEvent>) -> Json<serde_json::Value> {
-    // TODO: persist, idempotency, governance proof validation
-    Json(serde_json::json!({ "ok": true, "event_id": evt.event_id }))
+async fn append_event(headers: HeaderMap, Json(evt): Json<EconomicEvent>) -> (axum::http::StatusCode, Json<serde_json::Value>) {
+    // Idempotency handling (in-memory PoC)
+    if let Some(key) = headers.get("Idempotency-Key").and_then(|v| v.to_str().ok()) {
+        let mut set = IDEMPOTENCY_KEYS.lock().unwrap();
+        if set.contains(key) {
+            return (axum::http::StatusCode::OK, Json(serde_json::json!({ "ok": true, "event_id": evt.event_id, "idempotent": true })));
+        }
+        set.insert(key.to_string());
+    }
+
+    if let Err(msg) = validate_event(&evt) {
+        tracing::warn!(error = %msg, "event validation failed");
+        return (axum::http::StatusCode::BAD_REQUEST, Json(serde_json::json!({ "ok": false, "error": msg })));
+    }
+
+    tracing::info!(event_id = %evt.event_id, event_type = %evt.event_type, aggregate_id = %evt.aggregate_id, amount_cents = evt.amount_cents, currency = %evt.currency, participants = ?evt.participants, "append event");
+    (axum::http::StatusCode::OK, Json(serde_json::json!({ "ok": true, "event_id": evt.event_id })))
 }
+
+async fn health() -> Json<Health> { Json(Health { ok: true }) }
