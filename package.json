@@ -10,7 +10,8 @@
   "scripts": {
     "dev": "echo Use Makefile targets (make dev)",
     "test": "echo Run workspace tests via service scripts",
-    "lint": "echo Lint via service scripts"
+    "lint": "echo Lint via service scripts",
+    "gen:openapi": "npx openapi-typescript docs/api/openapi.yaml -o services/api-gateway/src/types/openapi.d.ts"
   }
 }
 

@@ -1,7 +1,10 @@
 import Fastify from 'fastify';
 import { registerAuth } from './middleware/auth';
+import { registerJwt } from './middleware/jwt';
 
 const server = Fastify({ logger: true });
+// JWT first (if enabled), else dev auth stub
+registerJwt(server);
 registerAuth(server);
 
 // Downstream service URLs (can be overridden by environment)

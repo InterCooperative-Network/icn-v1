@@ -28,6 +28,10 @@ jobs:
           cd services/api-gateway && npx tsc -p tsconfig.json --noEmit
           cd ../../services/identity-federation && npx tsc -p tsconfig.json --noEmit
           cd ../../services/resource-discovery && npx tsc -p tsconfig.json --noEmit
+      - name: Generate OpenAPI types
+        run: |
+          npm i -g openapi-typescript
+          npm run gen:openapi
       - name: Run governance-engine tests
         uses: actions/setup-python@v5
         with:

@@ -11,6 +11,7 @@
     "skipLibCheck": true
   },
   "include": ["src/**/*.ts"],
+  "files": ["src/types/openapi.d.ts"],
   "exclude": ["node_modules", "dist"]
 }
 
