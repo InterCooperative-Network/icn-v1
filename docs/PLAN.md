@@ -6,7 +6,7 @@
 - [x] Services present: `event-store` (Rust), `governance-engine` (Python), `api-gateway` (TS)
 - [x] Discovery service added (TS) with `/health`, `/resources`, `/resources/search`
 - [x] Compose stack updated with discovery, OTel/log envs, named volumes, env_file
-- [x] CI workflows present: CI, CI Smoke, CI Lint; Pages deploy exists
+- [x] CI workflows green: CI, CI Smoke, CI Lint; Pages deploy green
 - [x] CONTRIBUTING and CODEOWNERS added; service READMEs in place
 - [x] Security checklist and secrets example committed
 - [ ] Event invariants (idempotency, money units, governance proof) — TODO (next tasks)
