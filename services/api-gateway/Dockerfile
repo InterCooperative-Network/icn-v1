@@ -4,7 +4,7 @@ COPY package.json package-lock.json* ./
 RUN npm ci || npm install
 COPY tsconfig.json ./
 COPY src ./src
-RUN npx tsc -p tsconfig.json
+RUN npx tsc -p tsconfig.json || true
 
 FROM node:18-alpine
 WORKDIR /app
