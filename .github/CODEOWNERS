@@ -1,0 +1,7 @@
+# Code owners by service
+/services/event-store/ @icn-systems
+/services/governance-engine/ @icn-governance
+/services/api-gateway/ @icn-edge
+/services/discovery/ @icn-edge
+# default (fallback)
+* @icn-systems
