@@ -13,7 +13,7 @@ const EconomicEventSchema = z.object({
   timestamp: z.string().datetime(),
   participants: z.array(z.string()).min(1),
   amount_cents: z.number().int().nonnegative(),
-  currency: z.string().min(3).max(3)
+  currency: z.string().min(3).max(3).transform((v) => v.toUpperCase()).refine((v) => /^[A-Z]{3}$/.test(v), 'currency must be 3 uppercase letters')
 })
 
 function generateId(): string {

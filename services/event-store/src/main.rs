@@ -31,6 +31,9 @@ fn validate_event(event: &EconomicEvent) -> Result<(), String> {
     if event.amount_cents < 0 {
         return Err("amount_cents must be non-negative".to_string());
     }
+    if event.currency.len() != 3 || !event.currency.chars().all(|c| c.is_ascii_uppercase()) {
+        return Err("currency must be 3 uppercase letters".to_string());
+    }
     let now = Utc::now();
     let delta = now - event.timestamp;
     let delta_abs = if delta.num_seconds() < 0 { -(delta.num_seconds()) } else { delta.num_seconds() };

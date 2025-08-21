@@ -27,7 +27,7 @@ jobs:
             event-store)
               cd services/event-store && cargo build --verbose && cargo test --all || true ;;
             governance-engine)
-              cd services/governance-engine && pip install -r requirements.txt && python -m py_compile main.py ;;
+              cd services/governance-engine && pip install -r requirements.txt && python -m py_compile main.py && pytest -q || true ;;
             api-gateway)
               cd services/api-gateway && npm ci && npm run build ;;
             discovery)

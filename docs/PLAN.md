@@ -13,7 +13,7 @@
 - [x] Idempotency key support in event-store (in-memory) — persistence to Redis/PG pending
 - [ ] Money as first-class type across services and JSON Schemas (smallest unit) — TODO
 - [ ] Observability stubs expanded (OTel SDKs per service) — TODO
-- [ ] Add Zod schema validation in gateway — TODO
+- [x] Add Zod schema validation in gateway — DONE (currency normalized/validated)
 - [ ] Governance voting flows and tests — TODO
 - [ ] Rust event-store persistence and tests — TODO
 
