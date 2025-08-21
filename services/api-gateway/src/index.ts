@@ -49,6 +49,46 @@ server.get('/api/governance/health', async () => getJson(`${GOVERNANCE_URL}/heal
 server.get('/api/discovery/health', async () => getJson(`${DISCOVERY_URL}/health`));
 server.get('/api/identity/health', async () => getJson(`${IDENTITY_URL}/health`));
 
+// Basic pass-through routes for PoC
+server.post('/api/proposals', async (request, reply) => {
+  const res = await fetch(`${GOVERNANCE_URL}/proposals`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(request.body ?? {}),
+  });
+  reply.code(res.status).send(await res.json().catch(() => ({})));
+});
+
+server.post('/api/proposals/:id/vote', async (request, reply) => {
+  const { id } = request.params as any;
+  const res = await fetch(`${GOVERNANCE_URL}/proposals/${id}/vote`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(request.body ?? {}),
+  });
+  reply.code(res.status).send(await res.json().catch(() => ({})));
+});
+
+server.get('/api/proposals/:id/results', async (request, reply) => {
+  const { id } = request.params as any;
+  const res = await fetch(`${GOVERNANCE_URL}/proposals/${id}/results`);
+  reply.code(res.status).send(await res.json().catch(() => ({})));
+});
+
+server.post('/api/resources', async (request, reply) => {
+  const res = await fetch(`${DISCOVERY_URL}/resources`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(request.body ?? {}),
+  });
+  reply.code(res.status).send(await res.json().catch(() => ({})));
+});
+
+server.get('/api/resources', async (_request, reply) => {
+  const res = await fetch(`${DISCOVERY_URL}/resources`);
+  reply.code(res.status).send(await res.json().catch(() => ({})));
+});
+
 const port = Number(process.env.PORT || 3000);
 
 server
