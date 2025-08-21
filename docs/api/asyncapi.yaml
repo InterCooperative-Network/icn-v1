@@ -8,6 +8,34 @@ channels:
         name: EconomicEvent
         payload:
           $ref: '#/components/schemas/EconomicEvent'
+  icn.events.economic.approved:
+    address: icn.events.economic.approved
+    messages:
+      EconomicEvent:
+        name: EconomicEvent
+        payload:
+          $ref: '#/components/schemas/EconomicEvent'
+  icn.events.economic.executed:
+    address: icn.events.economic.executed
+    messages:
+      EconomicEvent:
+        name: EconomicEvent
+        payload:
+          $ref: '#/components/schemas/EconomicEvent'
+  icn.events.governance.proposals:
+    address: icn.events.governance.proposals
+    messages:
+      GovernanceEvent:
+        name: GovernanceEvent
+        payload:
+          $ref: '#/components/schemas/GovernanceEvent'
+  icn.events.governance.votes:
+    address: icn.events.governance.votes
+    messages:
+      GovernanceEvent:
+        name: GovernanceEvent
+        payload:
+          $ref: '#/components/schemas/GovernanceEvent'
 components:
   schemas:
     EconomicEvent:
@@ -18,5 +46,12 @@ components:
         aggregate_id: { type: string }
         timestamp: { type: string, format: date-time }
         event_data: { type: object }
+    GovernanceEvent:
+      type: object
+      properties:
+        proposal_id: { type: string }
+        event_type: { type: string }
+        timestamp: { type: string, format: date-time }
+        data: { type: object }
 
 

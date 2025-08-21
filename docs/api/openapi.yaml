@@ -30,7 +30,7 @@ paths:
       responses:
         '200': { description: OK }
 
-  /api/proposals:
+  /api/v1/proposals:
     post:
       summary: Create proposal
       requestBody:
@@ -40,14 +40,14 @@ paths:
             schema:
               $ref: '#/components/schemas/ProposalRequest'
       responses:
-        '200':
-          description: Created proposal
+        '201':
+          description: Created
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Proposal'
 
-  /api/proposals/{id}/vote:
+  /api/v1/proposals/{id}/vote:
     post:
       summary: Cast vote on proposal
       parameters:
@@ -64,7 +64,7 @@ paths:
       responses:
         '200': { description: Vote recorded }
 
-  /api/proposals/{id}/results:
+  /api/v1/proposals/{id}/results:
     get:
       summary: Get proposal results
       parameters:
@@ -110,6 +110,140 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SharedResource'
+
+  /api/v1/cooperatives:
+    post:
+      summary: Register cooperative
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CooperativeRegistration'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cooperative'
+  /api/v1/cooperatives/{id}:
+    get:
+      summary: Get cooperative by id
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Cooperative
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cooperative'
+
+  /api/v1/members:
+    post:
+      summary: Register member
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MemberRegistration'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Member'
+
+  /api/v1/events:
+    post:
+      summary: Append economic event
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EconomicEventAppend'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EconomicEvent'
+    get:
+      summary: Query events
+      parameters:
+        - in: query
+          name: type
+          schema: { type: string }
+      responses:
+        '200':
+          description: Events
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/EconomicEvent' }
+                  total_count: { type: integer }
+
+  /api/v1/resources:
+    post:
+      summary: Register resource (v1)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResourceRegistration'
+      responses:
+        '201': { description: Created }
+  /api/v1/resources/search:
+    get:
+      summary: Search resources
+      parameters:
+        - in: query
+          name: q
+          schema: { type: string }
+        - in: query
+          name: type
+          schema: { type: string }
+      responses:
+        '200':
+          description: Results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  resources:
+                    type: array
+                    items: { $ref: '#/components/schemas/SharedResource' }
+                  total_count: { type: integer }
+  /api/v1/resources/{id}/request:
+    post:
+      summary: Request resource usage
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResourceRequest'
+      responses:
+        '202': { description: Accepted }
 
 components:
   schemas:
@@ -177,5 +311,71 @@ components:
         resourceType: { type: string }
         ownerCooperativeId: { type: string }
         description: { type: string }
+    ResourceRequest:
+      type: object
+      properties:
+        requesterId: { type: string }
+        requestedPeriod:
+          type: object
+          properties:
+            start: { type: string, format: date-time }
+            end: { type: string, format: date-time }
+          required: [start, end]
+        purpose: { type: string }
+    CooperativeRegistration:
+      type: object
+      properties:
+        legal_name: { type: string }
+        domain: { type: string }
+        governance_model: { type: string }
+      required: [legal_name, domain]
+    Cooperative:
+      type: object
+      properties:
+        id: { type: string }
+        legal_name: { type: string }
+        domain: { type: string }
+        governance_model: { type: string }
+        created_at: { type: string, format: date-time }
+    MemberRegistration:
+      type: object
+      properties:
+        member_id: { type: string }
+        home_cooperative_id: { type: string }
+        email: { type: string }
+      required: [member_id, home_cooperative_id, email]
+    Member:
+      type: object
+      properties:
+        id: { type: string }
+        member_id: { type: string }
+        home_cooperative_id: { type: string }
+        email: { type: string }
+        created_at: { type: string, format: date-time }
+    EconomicEventAppend:
+      type: object
+      properties:
+        event_type: { type: string }
+        aggregate_id: { type: string }
+        initiator_id: { type: string }
+        participants:
+          type: array
+          items: { type: string }
+        event_data: { type: object }
+      required: [event_type, aggregate_id, initiator_id, event_data]
+    EconomicEvent:
+      type: object
+      properties:
+        id: { type: string }
+        event_type: { type: string }
+        aggregate_id: { type: string }
+        initiator_id: { type: string }
+        participants:
+          type: array
+          items: { type: string }
+        event_data: { type: object }
+        governance_status: { type: string }
+        governance_metadata: { type: object }
+        created_at: { type: string, format: date-time }
 
 

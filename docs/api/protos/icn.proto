@@ -1,0 +1,51 @@
+syntax = "proto3";
+package icn;
+
+// Economic Event and Event Store service
+message EconomicEvent {
+  string event_id = 1;
+  string event_type = 2;
+  string aggregate_id = 3;
+  string timestamp = 4;
+  bytes event_data = 5;
+}
+
+message EventQuery {
+  string event_type = 1;
+}
+
+message EventResult {
+  bool ok = 1;
+  string id = 2;
+}
+
+service EventStore {
+  rpc AppendEvent (EconomicEvent) returns (EventResult);
+  rpc StreamEvents (EventQuery) returns (stream EconomicEvent);
+}
+
+// Governance service
+message VotingRequest {
+  string proposal_id = 1;
+}
+
+message VotingSession {
+  string session_id = 1;
+}
+
+message ProposalRef {
+  string proposal_id = 1;
+}
+
+message GovernanceResult {
+  string proposal_id = 1;
+  bool approved = 2;
+  string result = 3; // approved|rejected|quorum_not_met
+}
+
+service Governance {
+  rpc InitiateVoting (VotingRequest) returns (VotingSession);
+  rpc Tally (ProposalRef) returns (GovernanceResult);
+}
+
+

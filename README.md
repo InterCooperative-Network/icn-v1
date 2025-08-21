@@ -6,6 +6,11 @@ Democratic coordination infrastructure for autonomous cooperatives. This reposit
 - `docs/poc-objectives.md` — Objectives, scope, milestones, success metrics
 - `docs/governance-process.md` — Governance models and decision process
 - `docs/implementation-guide.md` — Complete implementation guide for AI agents
+ - `docs/specs/foundational-spec-v1.0.md` — Single source of truth for PoC
+ - `docs/api/openapi.yaml` — REST API (v1 endpoints)
+ - `docs/api/asyncapi.yaml` — Event topics
+ - `docs/api/protos/icn.proto` — gRPC stubs
+ - `docs/database/schema.md` — Database schema overview
 
 ## Quick Start
 1. Ensure Docker and Docker Compose are installed
