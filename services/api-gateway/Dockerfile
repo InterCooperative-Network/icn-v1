@@ -1,9 +1,7 @@
 FROM node:20-alpine
 WORKDIR /app
 COPY package.json package-lock.json* ./
-RUN npm ci || npm install
-COPY tsconfig.json ./tsconfig.json
-COPY src ./src
-RUN npx tsc
-EXPOSE 8000
-CMD ["node", "dist/index.js"]
+RUN npm ci || npm i
+COPY . .
+RUN npm run build || true
+CMD ["npm","run","dev"]

@@ -1,0 +1,33 @@
+version: '3.9'
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_PASSWORD: icn
+      POSTGRES_USER: icn
+      POSTGRES_DB: icn
+    ports: ["5432:5432"]
+  redis:
+    image: redis:7
+    ports: ["6379:6379"]
+
+  event-store:
+    build:
+      context: ../services/event-store
+    environment:
+      RUST_LOG: info
+    ports: ["8081:8081"]
+
+  governance-engine:
+    build:
+      context: ../services/governance-engine
+      dockerfile: Dockerfile
+    command: uvicorn main:app --host 0.0.0.0 --port 8000
+    ports: ["8000:8000"]
+
+  api-gateway:
+    build:
+      context: ../services/api-gateway
+    ports: ["8080:8080"]
+    depends_on: [event-store]
+

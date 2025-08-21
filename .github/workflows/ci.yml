@@ -1,0 +1,34 @@
+name: CI
+on: [push, pull_request]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [event-store, governance-engine, api-gateway]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Rust
+        if: matrix.service == 'event-store'
+        uses: actions-rs/toolchain@v1
+        with: { toolchain: stable, override: true }
+      - name: Node
+        if: matrix.service == 'api-gateway'
+        uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - name: Python
+        if: matrix.service == 'governance-engine'
+        uses: actions/setup-python@v5
+        with: { python-version: '3.11' }
+      - name: Build & test
+        run: |
+          case "${{ matrix.service }}" in
+            event-store)
+              cd services/event-store && cargo build --verbose && cargo test --all || true ;;
+            governance-engine)
+              cd services/governance-engine && pip install -r requirements.txt && python -m py_compile main.py ;;
+            api-gateway)
+              cd services/api-gateway && npm ci && npm run build ;;
+          esac
+

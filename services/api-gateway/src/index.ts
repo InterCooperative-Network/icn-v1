@@ -1,1 +1,17 @@
-import Fastify from "fastify"; const app = Fastify(); app.get("/health", async () => ({ ok: true })); app.listen({ port: 8000, host: "0.0.0.0" });
+import Fastify from 'fastify'
+import { request } from 'undici'
+
+const fastify = Fastify({ logger: true })
+
+fastify.post('/economic/commands/append', async (req, reply) => {
+  const body: any = await req.body
+  const res = await request('http://event-store:8081/events/append', {
+    method: 'POST',
+    body: JSON.stringify(body),
+    headers: { 'content-type': 'application/json' }
+  })
+  const json = await res.body.json()
+  return reply.send(json)
+})
+
+fastify.listen({ host: '0.0.0.0', port: 8080 })
