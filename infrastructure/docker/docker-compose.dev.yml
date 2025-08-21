@@ -90,6 +90,10 @@ services:
       GOVERNANCE_ENGINE_URL: http://governance-engine:8000
       RESOURCE_DISCOVERY_URL: http://resource-discovery:3002
       IDENTITY_SERVICE_URL: http://identity-federation:3001
+      JWT_ENABLED: "false"
+      JWT_JWKS_URI: http://keycloak:8080/realms/icn-platform/protocol/openid-connect/certs
+      JWT_ISSUER: http://keycloak:8080/realms/icn-platform
+      JWT_AUDIENCE: icn-api
     ports:
       - "3000:3000"
     depends_on:
