@@ -41,7 +41,7 @@ jobs:
           cd services/governance-engine
           python -m venv .venv
           . .venv/bin/activate
-          pip install -r requirements.txt
+          pip install -r requirements.txt -r requirements-dev.txt
           pytest -q
       - name: Smoke test (compose up + gateway E2E)
         run: |
