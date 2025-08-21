@@ -1,0 +1,216 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: icn_dev
+      POSTGRES_USER: icn
+      POSTGRES_PASSWORD: dev_password_change_me
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    ports:
+      - "9092:9092"
+    depends_on:
+      - zookeeper
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:23.0
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin123
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/icn_dev
+      KC_DB_USERNAME: icn
+      KC_DB_PASSWORD: dev_password_change_me
+    ports:
+      - "8080:8080"
+    command: start-dev
+    depends_on:
+      - postgres
+
+  event-store:
+    build:
+      context: ../../services/event-store
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: postgresql://icn:dev_password_change_me@postgres:5432/icn_dev
+      RUST_LOG: info
+    ports:
+      - "8001:8001"
+    depends_on:
+      - postgres
+      - kafka
+
+  governance-engine:
+    build:
+      context: ../../services/governance-engine
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: postgresql://icn:dev_password_change_me@postgres:5432/icn_dev
+    ports:
+      - "8002:8002"
+    depends_on:
+      - postgres
+
+  api-gateway:
+    build:
+      context: ../../services/api-gateway
+      dockerfile: Dockerfile
+    environment:
+      EVENT_STORE_URL: http://event-store:8001
+      GOVERNANCE_URL: http://governance-engine:8002
+    ports:
+      - "8000:8000"
+    depends_on:
+      - event-store
+      - governance-engine
+
+  web-frontend:
+    build:
+      context: ../../services/web-frontend
+      dockerfile: Dockerfile
+    environment:
+      VITE_API_URL: http://localhost:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api-gateway
+
+volumes:
+  postgres_data:
+
+networks:
+  default:
+    name: icn-dev
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: icn_dev
+      POSTGRES_USER: icn
+      POSTGRES_PASSWORD: dev_password_change_me
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    ports:
+      - "9092:9092"
+    depends_on:
+      - zookeeper
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:23.0
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin123
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/icn_dev
+      KC_DB_USERNAME: icn
+      KC_DB_PASSWORD: dev_password_change_me
+    ports:
+      - "8080:8080"
+    command: start-dev
+    depends_on:
+      - postgres
+
+  event-store:
+    build:
+      context: ../../services/event-store
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: postgresql://icn:dev_password_change_me@postgres:5432/icn_dev
+      RUST_LOG: info
+    ports:
+      - "8001:8001"
+    depends_on:
+      - postgres
+      - kafka
+
+  governance-engine:
+    build:
+      context: ../../services/governance-engine
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: postgresql://icn:dev_password_change_me@postgres:5432/icn_dev
+    ports:
+      - "8002:8002"
+    depends_on:
+      - postgres
+
+  api-gateway:
+    build:
+      context: ../../services/api-gateway
+      dockerfile: Dockerfile
+    environment:
+      EVENT_STORE_URL: http://event-store:8001
+      GOVERNANCE_URL: http://governance-engine:8002
+    ports:
+      - "8000:8000"
+    depends_on:
+      - event-store
+      - governance-engine
+
+  web-frontend:
+    build:
+      context: ../../services/web-frontend
+      dockerfile: Dockerfile
+    environment:
+      VITE_API_URL: http://localhost:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api-gateway
+
+volumes:
+  postgres_data:
+
+networks:
+  default:
+    name: icn-dev
