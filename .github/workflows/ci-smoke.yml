@@ -11,6 +11,10 @@ jobs:
       - name: Install jq
         run: sudo apt-get update && sudo apt-get install -y jq
 
+      - name: Prepare env
+        run: |
+          cp -v .env.example .env || true
+
       - name: Build and start stack
         run: docker compose -f infra/docker-compose.dev.yml up -d --build
 
