@@ -2,17 +2,65 @@ import Fastify from 'fastify';
 
 const server = Fastify({ logger: true });
 
+// Downstream service URLs (can be overridden by environment)
+const GOVERNANCE_URL = process.env.GOVERNANCE_ENGINE_URL || 'http://localhost:8000';
+const DISCOVERY_URL = process.env.RESOURCE_DISCOVERY_URL || 'http://localhost:3002';
+const IDENTITY_URL = process.env.IDENTITY_SERVICE_URL || 'http://localhost:3001';
+
+async function getJson(url: string) {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 3000);
+    const res = await fetch(url, { signal: controller.signal as any });
+    clearTimeout(timeout);
+    if (!res.ok) {
+      return { ok: false, status: res.status };
+    }
+    const data = await res.json().catch(() => ({}));
+    return { ok: true, data };
+  } catch (error) {
+    return { ok: false, error: String(error) };
+  }
+}
+
 server.get('/health', async () => ({ status: 'ok' }));
 server.get('/ready', async () => ({ status: 'ready' }));
 
+// Basic health fan-out for downstream services
+server.get('/api/health', async () => {
+  const [governance, discovery, identity] = await Promise.all([
+    getJson(`${GOVERNANCE_URL}/health`),
+    getJson(`${DISCOVERY_URL}/health`),
+    getJson(`${IDENTITY_URL}/health`),
+  ]);
+
+  return {
+    status: 'ok',
+    services: {
+      governance,
+      discovery,
+      identity,
+    },
+  };
+});
+
+// Pass-through health checks for convenience
+server.get('/api/governance/health', async () => getJson(`${GOVERNANCE_URL}/health`));
+server.get('/api/discovery/health', async () => getJson(`${DISCOVERY_URL}/health`));
+server.get('/api/identity/health', async () => getJson(`${IDENTITY_URL}/health`));
+
 const port = Number(process.env.PORT || 3000);
 
-server.listen({ port, host: '0.0.0.0' }).then(() => {
-  server.log.info(`API Gateway listening on ${port}`);
-}).catch((err) => {
-  server.log.error(err);
-  process.exit(1);
-});
+server
+  .listen({ port, host: '0.0.0.0' })
+  .then(() => {
+    server.log.info(`API Gateway listening on ${port}`);
+    server.log.info(`Downstreams: governance=${GOVERNANCE_URL}, discovery=${DISCOVERY_URL}, identity=${IDENTITY_URL}`);
+  })
+  .catch((err) => {
+    server.log.error(err);
+    process.exit(1);
+  });
 
 import Fastify from 'fastify'
 import { sdk } from './otel'
