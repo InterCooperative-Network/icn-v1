@@ -124,10 +124,4 @@ def proposal_results(proposal_id: str):
         "result": result,
     }
 
-from fastapi import FastAPI
-
-app = FastAPI()
-
-@app.get("/health")
-async def health():
-    return {"ok": True}
+# Duplicate app definition removed; health is already defined above.

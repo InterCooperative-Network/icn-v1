@@ -88,6 +88,7 @@ services:
       context: ../../services/api-gateway
     environment:
       GOVERNANCE_ENGINE_URL: http://governance-engine:8000
+      EVENT_STORE_URL: http://event-store:8081
       RESOURCE_DISCOVERY_URL: http://resource-discovery:3002
       IDENTITY_SERVICE_URL: http://identity-federation:3001
       JWT_ENABLED: "false"
@@ -98,6 +99,7 @@ services:
       - "3000:3000"
     depends_on:
       - governance-engine
+      - event-store
       - resource-discovery
       - identity-federation
 
@@ -108,6 +110,12 @@ services:
       - "8000:8000"
     depends_on:
       - postgres
+
+  event-store:
+    build:
+      context: ../../services/event-store
+    ports:
+      - "8081:8081"
 
   identity-federation:
     build:
