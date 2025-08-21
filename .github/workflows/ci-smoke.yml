@@ -53,6 +53,15 @@ jobs:
           curl -s -X POST http://localhost:8080/economic/commands/append \
             -H 'content-type: application/json' \
             -d '{"event_id":"00000000-0000-4000-8000-0000000000ff","event_type":"ci_test","aggregate_id":"00000000-0000-4000-8000-0000000000f0","timestamp":"2025-01-01T00:00:00Z","participants":["ci"],"amount_cents":4,"currency":"USD"}' | jq -r '.ok' | grep true
+          # Inter-coop governance gating (expect 202)
+          code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/economic/commands/append \
+            -H 'content-type: application/json' \
+            -d '{"event_id":"00000000-0000-4000-8000-0000000001aa","event_type":"resource_exchange_proposed","aggregate_id":"00000000-0000-4000-8000-0000000000aa","timestamp":"2025-01-01T00:00:00Z","participants":["a","b"],"amount_cents":10,"currency":"USD"}')
+          test "$code" = "202"
+          # Approved header path (expect ok true)
+          curl -s -X POST http://localhost:8080/economic/commands/append \
+            -H 'content-type: application/json' -H 'x-governance-approved: true' \
+            -d '{"event_id":"00000000-0000-4000-8000-0000000001ab","event_type":"resource_exchange_proposed","aggregate_id":"00000000-0000-4000-8000-0000000000aa","timestamp":"2025-01-01T00:02:00Z","participants":["a","b"],"amount_cents":10,"currency":"USD"}' | jq -r '.ok' | grep true
 
       - name: Show logs on failure
         if: failure()

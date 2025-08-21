@@ -14,6 +14,13 @@ const EconomicEventSchema = z.object({
   currency: z.string().min(3).max(3)
 })
 
+function generateId(): string {
+  // Prefer crypto.randomUUID if available; otherwise simple fallback
+  const c: any = (globalThis as any).crypto
+  if (c && typeof c.randomUUID === 'function') return c.randomUUID()
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`
+}
+
 fastify.get('/health', async () => ({ ok: true }))
 
 fastify.post('/economic/commands/append', async (req, reply) => {
@@ -22,6 +29,32 @@ fastify.post('/economic/commands/append', async (req, reply) => {
     return reply.code(400).send({ ok: false, error: 'validation_failed', issues: parse.error.issues })
   }
   const body = parse.data
+  const isIntercoop = new Set(body.participants).size > 1
+  const governanceApproved = String((req.headers['x-governance-approved'] ?? '')).toLowerCase() === 'true'
+
+  if (isIntercoop && !governanceApproved) {
+    // Create a governance proposal (stub) and inform client to approve
+    const proposal_id = generateId()
+    try {
+      const deadline = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+      await request('http://governance-engine:8000/proposals', {
+        method: 'POST',
+        body: JSON.stringify({
+          proposal_id,
+          title: `Approve inter-coop event ${body.event_type}`,
+          description: `Aggreg: ${body.aggregate_id}; participants: ${body.participants.join(',')}`,
+          deadline,
+          model: 'majority',
+          quorum: 0.5,
+          approval: 0.5
+        }),
+        headers: { 'content-type': 'application/json' }
+      })
+    } catch (e) {
+      req.log.warn({ err: e }, 'failed to create governance proposal')
+    }
+    return reply.code(202).send({ ok: false, governance_required: true, proposal_id })
+  }
   const res = await request('http://event-store:8081/events/append', {
     method: 'POST',
     body: JSON.stringify(body),
