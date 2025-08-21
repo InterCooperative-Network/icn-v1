@@ -9,7 +9,9 @@
 - [x] CI workflows green: CI, CI Smoke, CI Lint; Pages deploy green
 - [x] CONTRIBUTING and CODEOWNERS added; service READMEs in place
 - [x] Security checklist and secrets example committed
-- [ ] Event invariants (idempotency, money units, governance proof) — TODO (next tasks)
+- [x] Inter-coop governance gating enforced at gateway (returns 202 + creates proposal when unapproved) — stub; proof verification pending
+- [x] Idempotency key support in event-store (in-memory) — persistence to Redis/PG pending
+- [ ] Money as first-class type across services and JSON Schemas (smallest unit) — TODO
 - [ ] Observability stubs expanded (OTel SDKs per service) — TODO
 - [ ] Add Zod schema validation in gateway — TODO
 - [ ] Governance voting flows and tests — TODO
@@ -25,3 +27,9 @@
 2. Add runtime validation (Zod) and typed client with retries to API gateway.
 3. Wire basic OTel traces/log context fields.
 4. Expand tests to keep CI green while adding features.
+5. Replace header-based governance approval with verifiable proof:
+   - Governance issues signed approval token for inter-coop proposals
+   - Gateway attaches proof to command → Event-store verifies signature before append
+6. Persist idempotency keys (Redis/PG) with expiry; include request hash to detect body changes
+7. Promote Money type to shared contract/schema; enforce currency codes and non-negative amounts in gateway and event-store
+8. Extend CI smoke to cover governance 202 path and approved path; add unit tests in gateway for gating logic
