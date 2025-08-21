@@ -1,12 +1,13 @@
 # ICN v1 — Fresh Monorepo + Website (Execution Plan)
 
 ## Status Checklist
-- [x] New GitHub repo created (`InterCooperative-Network/icn-v1`), default branch `main`
+- [x] New GitHub repo created (`InterCooperative-Network/icn-v1`), default branch `main` (rename to `icn` blocked; name already exists)
 - [x] Contracts added (`contracts/json`, `contracts/asyncapi`, `contracts/proto`, `contracts/openapi`)
 - [x] Services present: `event-store` (Rust), `governance-engine` (Python), `api-gateway` (TS)
 - [x] Discovery service added (TS) with `/health`, `/resources`, `/resources/search`
 - [x] Compose stack updated with discovery, OTel/log envs, named volumes, env_file
 - [x] CI workflows present: CI, CI Smoke, CI Lint; Pages deploy exists
+- [x] CONTRIBUTING and CODEOWNERS added; service READMEs in place
 - [x] Security checklist and secrets example committed
 - [ ] Event invariants (idempotency, money units, governance proof) — TODO (next tasks)
 - [ ] Observability stubs expanded (OTel SDKs per service) — TODO
