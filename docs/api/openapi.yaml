@@ -1,0 +1,11 @@
+openapi: 3.1.0
+info: { title: ICN API, version: 0.1.0 }
+servers: [{ url: https://api.icn.local }]
+paths:
+  /api/v1/proposals:
+    post:
+      summary: Create proposal
+      requestBody: { required: true }
+      responses: { '201': { description: Created } }
+
+

@@ -1,0 +1,17 @@
+{
+  "name": "icn-platform",
+  "private": true,
+  "version": "0.1.0",
+  "description": "InterCooperative Network Platform (Substrate) monorepo",
+  "workspaces": [
+    "services/*",
+    "web-frontend"
+  ],
+  "scripts": {
+    "dev": "echo Use Makefile targets (make dev)",
+    "test": "echo Run workspace tests via service scripts",
+    "lint": "echo Lint via service scripts"
+  }
+}
+
+

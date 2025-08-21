@@ -1,3 +1,35 @@
+# Node
+node_modules/
+npm-debug.log*
+pnpm-lock.yaml
+yarn.lock
+
+# Python
+__pycache__/
+.venv/
+venv/
+*.pyc
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Build / Coverage / Logs
+dist/
+build/
+coverage/
+*.log
+
+# Docker
+.env
+.env.*
+
+# Frontend
+.next/
+.cache/
+
 # general
 .DS_Store
 node_modules/

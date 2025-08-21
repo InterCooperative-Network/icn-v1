@@ -1,0 +1,13 @@
+{
+  "name": "@icn/web-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "echo Start frontend (placeholder)",
+    "build": "echo Build frontend (placeholder)",
+    "start": "echo Run frontend (placeholder)",
+    "test": "echo Test frontend (placeholder)"
+  }
+}
+
+

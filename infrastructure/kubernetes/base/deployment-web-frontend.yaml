@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-frontend
+  namespace: icn-platform
+  labels:
+    app: web-frontend
+    component: web
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: web-frontend
+  template:
+    metadata:
+      labels:
+        app: web-frontend
+        component: web
+    spec:
+      containers:
+      - name: web-frontend
+        image: icn/web-frontend:latest
+        ports:
+        - containerPort: 3000
+          name: http
+

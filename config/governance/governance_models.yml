@@ -1,0 +1,42 @@
+governance_models:
+  consensus:
+    name: "Full Consensus"
+    quorum_threshold: 0.8
+    approval_threshold: 1.0
+    allows_objections: true
+    objection_resolution_required: true
+    voting_period_days: 14
+    discussion_period_days: 7
+  consensus_minus_one:
+    name: "Consensus Minus One"
+    quorum_threshold: 0.6
+    approval_threshold: 0.95
+    allows_objections: true
+    objection_resolution_required: true
+    voting_period_days: 10
+    discussion_period_days: 5
+  majority:
+    name: "Simple Majority"
+    quorum_threshold: 0.5
+    approval_threshold: 0.51
+    allows_objections: false
+    voting_period_days: 7
+    discussion_period_days: 3
+  supermajority:
+    name: "Supermajority (2/3)"
+    quorum_threshold: 0.6
+    approval_threshold: 0.67
+    allows_objections: false
+    voting_period_days: 10
+    discussion_period_days: 5
+  sociocratic_circles:
+    name: "Sociocratic Circles"
+    quorum_threshold: 0.7
+    approval_threshold: 1.0
+    allows_objections: true
+    objection_resolution_required: true
+    circle_structure_required: true
+    voting_period_days: 21
+    discussion_period_days: 14
+
+

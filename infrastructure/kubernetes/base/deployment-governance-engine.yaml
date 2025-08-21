@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: governance-engine
+  namespace: icn-platform
+  labels:
+    app: governance-engine
+    component: governance
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: governance-engine
+  template:
+    metadata:
+      labels:
+        app: governance-engine
+        component: governance
+    spec:
+      containers:
+      - name: governance-engine
+        image: icn/governance-engine:latest
+        ports:
+        - containerPort: 8000
+          name: http
+        env:
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: icn-config
+              key: LOG_LEVEL
+

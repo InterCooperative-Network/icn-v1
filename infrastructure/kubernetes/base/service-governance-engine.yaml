@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: governance-engine-service
+  namespace: icn-platform
+  labels:
+    app: governance-engine
+spec:
+  selector:
+    app: governance-engine
+  ports:
+  - name: http
+    port: 80
+    targetPort: 8000
+  type: ClusterIP
+
