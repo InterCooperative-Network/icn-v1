@@ -12,7 +12,6 @@
     "fastify": "^4.27.2",
     "undici": "^6.19.8",
     "zod": "^3.23.8",
-    "@opentelemetry/auto-instrumentations-node": "^0.51.1",
     "@opentelemetry/exporter-trace-otlp-http": "^0.51.1",
     "@opentelemetry/sdk-node": "^0.51.1"
   },
