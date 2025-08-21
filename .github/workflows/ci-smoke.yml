@@ -1,0 +1,60 @@
+name: CI Smoke
+on: [push, pull_request]
+
+jobs:
+  compose-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Build and start stack
+        run: docker compose -f infra/docker-compose.dev.yml up -d --build
+
+      - name: Wait for services
+        run: |
+          set -e
+          echo "Waiting for governance-engine (8000) ..."
+          for i in {1..60}; do
+            if curl -sSf http://localhost:8000/openapi.json >/dev/null 2>&1; then echo "governance up"; break; fi; sleep 2
+            if [ "$i" = "60" ]; then echo "governance not ready"; exit 1; fi
+          done
+
+          echo "Waiting for event-store (8081) ..."
+          for i in {1..60}; do
+            if curl -sSf -X POST http://localhost:8081/events/append \
+              -H 'content-type: application/json' \
+              -d '{"event_id":"00000000-0000-4000-8000-0000000000aa","event_type":"ping","aggregate_id":"00000000-0000-4000-8000-0000000000ab","timestamp":"2025-01-01T00:00:00Z","participants":["ci"],"amount_cents":1,"currency":"USD"}' >/dev/null 2>&1; then echo "event-store up"; break; fi; sleep 2
+            if [ "$i" = "60" ]; then echo "event-store not ready"; exit 1; fi
+          done
+
+          echo "Waiting for api-gateway (8080) ..."
+          for i in {1..60}; do
+            if curl -sSf -X POST http://localhost:8080/economic/commands/append \
+              -H 'content-type: application/json' \
+              -d '{"event_id":"00000000-0000-4000-8000-0000000000ac","event_type":"ping","aggregate_id":"00000000-0000-4000-8000-0000000000ad","timestamp":"2025-01-01T00:00:00Z","participants":["ci"],"amount_cents":2,"currency":"USD"}' >/dev/null 2>&1; then echo "gateway up"; break; fi; sleep 2
+            if [ "$i" = "60" ]; then echo "gateway not ready"; exit 1; fi
+          done
+
+      - name: Run smoke tests
+        run: |
+          set -e
+          curl -s http://localhost:8000/openapi.json | jq -r '.openapi' | grep -E '3\.[01]'
+          curl -s -X POST http://localhost:8081/events/append \
+            -H 'content-type: application/json' \
+            -d '{"event_id":"00000000-0000-4000-8000-0000000000ee","event_type":"ci_test","aggregate_id":"00000000-0000-4000-8000-0000000000ef","timestamp":"2025-01-01T00:00:00Z","participants":["ci"],"amount_cents":3,"currency":"USD"}' | jq -r '.ok' | grep true
+          curl -s -X POST http://localhost:8080/economic/commands/append \
+            -H 'content-type: application/json' \
+            -d '{"event_id":"00000000-0000-4000-8000-0000000000ff","event_type":"ci_test","aggregate_id":"00000000-0000-4000-8000-0000000000f0","timestamp":"2025-01-01T00:00:00Z","participants":["ci"],"amount_cents":4,"currency":"USD"}' | jq -r '.ok' | grep true
+
+      - name: Show logs on failure
+        if: failure()
+        run: docker compose -f infra/docker-compose.dev.yml logs --no-color | tail -n 500
+
+      - name: Shutdown
+        if: always()
+        run: docker compose -f infra/docker-compose.dev.yml down -v
+
