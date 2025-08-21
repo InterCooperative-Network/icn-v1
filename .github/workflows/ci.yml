@@ -1,4 +1,34 @@
 name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - name: Install API Gateway deps
+        run: |
+          cd services/api-gateway && npm ci || npm install
+      - name: Install Identity deps
+        run: |
+          cd services/identity-federation && npm ci || npm install
+      - name: Install Discovery deps
+        run: |
+          cd services/resource-discovery && npm ci || npm install
+      - name: TypeScript build checks
+        run: |
+          cd services/api-gateway && npx tsc -p tsconfig.json --noEmit
+          cd ../../services/identity-federation && npx tsc -p tsconfig.json --noEmit
+          cd ../../services/resource-discovery && npx tsc -p tsconfig.json --noEmit
+name: CI
 on: [push, pull_request]
 
 jobs:

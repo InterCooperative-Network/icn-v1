@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: resource-discovery
+  namespace: icn-platform
+  labels:
+    app: resource-discovery
+    component: discovery
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: resource-discovery
+  template:
+    metadata:
+      labels:
+        app: resource-discovery
+        component: discovery
+    spec:
+      containers:
+      - name: resource-discovery
+        image: icn/resource-discovery:latest
+        ports:
+        - containerPort: 3002
+          name: http
+
+

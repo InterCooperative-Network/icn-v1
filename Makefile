@@ -17,7 +17,19 @@ setup:
 dev:
 	@echo "Starting ICN Platform development environment..."
 	docker-compose -f infrastructure/docker/docker-compose.dev.yml up -d
+	@echo "(Optional) Start local services via npm/uvicorn in separate shells"
 
+dev-api:
+	cd services/api-gateway && npm run dev
+
+dev-identity:
+	cd services/identity-federation && npm run dev
+
+dev-discovery:
+	cd services/resource-discovery && npm run dev
+
+dev-governance:
+	cd services/governance-engine && uvicorn src.main:app --reload --port 8000
 test:
 	@echo "Running tests (placeholder)"
 

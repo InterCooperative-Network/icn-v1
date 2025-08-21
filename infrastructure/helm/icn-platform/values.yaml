@@ -1,0 +1,27 @@
+icn:
+  image:
+    repository: icn
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  apiGateway:
+    enabled: true
+    replicaCount: 1
+
+  governanceEngine:
+    enabled: true
+    replicaCount: 1
+
+  identityFederation:
+    enabled: true
+    replicaCount: 1
+
+  resourceDiscovery:
+    enabled: true
+    replicaCount: 1
+
+  webFrontend:
+    enabled: true
+    replicaCount: 1
+
+

@@ -1,5 +1,0 @@
-syntax = "proto3";
-package icn;
-message EconomicEvent { string event_id = 1; string event_type = 2; string aggregate_id = 3; string timestamp = 4; bytes event_data = 5; }
-message EventResult { bool ok = 1; string id = 2; }
-service EventStore { rpc AppendEvent(EconomicEvent) returns (EventResult); }
