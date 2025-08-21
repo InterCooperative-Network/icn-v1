@@ -1,7 +1,9 @@
 import Fastify from 'fastify'
+import { sdk } from './otel'
 import { request } from 'undici'
 import { z } from 'zod'
 
+await sdk.start()
 const fastify = Fastify({ logger: true })
 
 const EconomicEventSchema = z.object({

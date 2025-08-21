@@ -3,6 +3,11 @@ from pydantic import BaseModel
 from enum import Enum
 from datetime import datetime
 from typing import Dict, List
+from opentelemetry import trace
+from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+from opentelemetry.sdk.resources import SERVICE_NAME, Resource
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
 app = FastAPI(title="ICN Governance v1")
 
@@ -41,6 +46,16 @@ def tally_votes(p: Proposal, votes_for_p: List[Vote]) -> Dict[str, float | bool]
         need = p.approval if p.model == GovernanceModel.majority else max(0.66, p.approval)
         approved = ratio >= need
     return {"participation": participation, "approved": approved}
+
+# Minimal OTel setup (no collector required in dev)
+try:
+    resource = Resource(attributes={SERVICE_NAME: "governance"})
+    provider = TracerProvider(resource=resource)
+    processor = BatchSpanProcessor(OTLPSpanExporter())
+    provider.add_span_processor(processor)
+    trace.set_tracer_provider(provider)
+except Exception:
+    pass
 
 @app.post("/proposals")
 async def create_proposal(p: Proposal):

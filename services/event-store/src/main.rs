@@ -2,6 +2,9 @@ use axum::{http::HeaderMap, routing::get, routing::post, Json, Router};
 use serde::{Deserialize, Serialize};
 use chrono::{DateTime, Utc};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+use tracing_opentelemetry::OpenTelemetryLayer;
+use opentelemetry::global;
+use opentelemetry_otlp::WithExportConfig;
 use uuid::Uuid;
 use once_cell::sync::Lazy;
 use std::collections::HashSet;
@@ -41,10 +44,25 @@ fn validate_event(event: &EconomicEvent) -> Result<(), String> {
 
 #[tokio::main]
 async fn main() {
-    tracing_subscriber::registry()
-        .with(tracing_subscriber::EnvFilter::new("info"))
-        .with(tracing_subscriber::fmt::layer())
-        .init();
+    // Tracing + OTel
+    let tracer = opentelemetry_otlp::new_pipeline()
+        .tracing()
+        .with_exporter(
+            opentelemetry_otlp::new_exporter().http().with_endpoint(
+                std::env::var("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT")
+                    .unwrap_or_else(|_| "http://localhost:4318/v1/traces".to_string()),
+            ),
+        )
+        .install_batch(opentelemetry::runtime::Tokio)
+        .ok();
+
+    let otel = tracer.map(|t| OpenTelemetryLayer::new(t));
+    let registry = tracing_subscriber::registry().with(tracing_subscriber::EnvFilter::new("info"));
+    if let Some(otel_layer) = otel {
+        registry.with(otel_layer).with(tracing_subscriber::fmt::layer()).init();
+    } else {
+        registry.with(tracing_subscriber::fmt::layer()).init();
+    }
 
     let app = Router::new()
         .route("/health", get(health))
@@ -52,6 +70,7 @@ async fn main() {
     let listener = tokio::net::TcpListener::bind(("0.0.0.0", 8081)).await.unwrap();
     tracing::info!("event-store listening on 8081");
     axum::serve(listener, app).await.unwrap();
+    let _ = global::shutdown_tracer_provider();
 }
 
 async fn append_event(headers: HeaderMap, Json(evt): Json<EconomicEvent>) -> (axum::http::StatusCode, Json<serde_json::Value>) {
