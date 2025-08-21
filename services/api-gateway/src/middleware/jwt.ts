@@ -1,15 +1,18 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
-import jwt from 'jsonwebtoken';
-
-type Decoded = { sub?: string; email?: string; realm_access?: { roles?: string[] } };
+import { createRemoteJWKSet, jwtVerify, JWTPayload } from 'jose';
 
 export function registerJwt(server: FastifyInstance) {
   const enabled = process.env.JWT_ENABLED === 'true';
-  const secret = process.env.JWT_SECRET;
-  if (!enabled || !secret) {
-    server.log.warn('JWT auth disabled or missing secret; using dev auth stub');
+  const jwksUri = process.env.JWT_JWKS_URI; // e.g., https://keycloak/realms/icn/protocol/openid-connect/certs
+  const audience = process.env.JWT_AUDIENCE;
+  const issuer = process.env.JWT_ISSUER;
+
+  if (!enabled || !jwksUri) {
+    server.log.warn('JWT auth disabled or missing JWKS; using dev auth stub');
     return;
   }
+
+  const JWKS = createRemoteJWKSet(new URL(jwksUri));
 
   server.addHook('preHandler', async (req: FastifyRequest, reply: FastifyReply) => {
     try {
@@ -18,8 +21,16 @@ export function registerJwt(server: FastifyInstance) {
         return reply.code(401).send({ error: 'Missing bearer token' });
       }
       const token = auth.slice('Bearer '.length);
-      const decoded = jwt.verify(token, secret) as Decoded;
-      (req as any).user = { id: decoded.sub, email: decoded.email, roles: decoded.realm_access?.roles || [] };
+      const { payload } = await jwtVerify(token, JWKS, {
+        audience: audience || undefined,
+        issuer: issuer || undefined,
+      });
+      const p = payload as JWTPayload & { realm_access?: { roles?: string[] } };
+      (req as any).user = {
+        id: p.sub,
+        email: (p as any).email,
+        roles: p.realm_access?.roles || [],
+      };
     } catch (e) {
       return reply.code(401).send({ error: 'Invalid token' });
     }

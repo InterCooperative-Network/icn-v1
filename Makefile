@@ -30,6 +30,8 @@ dev-discovery:
 
 dev-governance:
 	cd services/governance-engine && uvicorn src.main:app --reload --port 8000
+dev-frontend:
+	cd web-frontend && npm run dev
 test:
 	@echo "Running tests (placeholder)"
 
@@ -66,13 +68,13 @@ docs-serve:
 
 .PHONY: dev stop logs clean
 
-dev:
+dev-old:
 	docker compose -f infra/docker-compose.dev.yml up --build -d
 
-stop:
+stop-old:
 	docker compose -f infra/docker-compose.dev.yml down
 
-logs:
+logs-old:
 	docker compose -f infra/docker-compose.dev.yml logs -f --tail=200
 
 clean: stop
