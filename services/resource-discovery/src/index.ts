@@ -1,4 +1,5 @@
 import Fastify from 'fastify';
+import { randomUUID } from 'crypto';
 
 const app = Fastify({ logger: true });
 
@@ -17,7 +18,7 @@ const resources: Record<string, Resource> = {};
 
 app.post('/resources', async (req, reply) => {
   const body: any = (req as any).body || {};
-  const id = crypto.randomUUID();
+  const id = randomUUID();
   const resource: Resource = {
     id,
     name: body.name,
