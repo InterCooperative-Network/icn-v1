@@ -83,6 +83,42 @@ services:
       timeout: 10s
       retries: 5
 
+  api-gateway:
+    build:
+      context: ../../services/api-gateway
+    environment:
+      GOVERNANCE_ENGINE_URL: http://governance-engine:8000
+      RESOURCE_DISCOVERY_URL: http://resource-discovery:3002
+      IDENTITY_SERVICE_URL: http://identity-federation:3001
+    ports:
+      - "3000:3000"
+    depends_on:
+      - governance-engine
+      - resource-discovery
+      - identity-federation
+
+  governance-engine:
+    build:
+      context: ../../services/governance-engine
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+
+  identity-federation:
+    build:
+      context: ../../services/identity-federation
+    ports:
+      - "3001:3001"
+    depends_on:
+      - keycloak
+
+  resource-discovery:
+    build:
+      context: ../../services/resource-discovery
+    ports:
+      - "3002:3002"
+
 volumes:
   postgres_data:
   redis_data:

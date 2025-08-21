@@ -28,6 +28,17 @@ jobs:
           cd services/api-gateway && npx tsc -p tsconfig.json --noEmit
           cd ../../services/identity-federation && npx tsc -p tsconfig.json --noEmit
           cd ../../services/resource-discovery && npx tsc -p tsconfig.json --noEmit
+      - name: Run governance-engine tests
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install governance-engine deps and test
+        run: |
+          cd services/governance-engine
+          python -m venv .venv
+          . .venv/bin/activate
+          pip install -r requirements.txt
+          pytest -q
 name: CI
 on: [push, pull_request]
 
