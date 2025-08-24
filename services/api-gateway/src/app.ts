@@ -6,14 +6,74 @@ export function buildApp() {
 
   const GOVERNANCE_URL = process.env.GOVERNANCE_URL || process.env.GOVERNANCE_ENGINE_URL || 'http://governance-engine:8000'
   const EVENT_STORE_URL = process.env.EVENT_STORE_URL || 'http://event-store:8081'
+  const RESOURCE_DISCOVERY_URL = process.env.RESOURCE_DISCOVERY_URL || 'http://resource-discovery:3002'
+  const IDENTITY_SERVICE_URL = process.env.IDENTITY_SERVICE_URL || 'http://identity-federation:3001'
 
-  fastify.get('/api/health', async () => ({ status: 'ok' }))
+  fastify.get('/api/health', async () => {
+    const targets = [
+      { name: 'governance', url: `${GOVERNANCE_URL}/health` },
+      { name: 'identity', url: `${IDENTITY_SERVICE_URL}/health` },
+      { name: 'discovery', url: `${RESOURCE_DISCOVERY_URL}/health` }
+    ]
+    const results: Record<string, string> = {}
+    await Promise.all(
+      targets.map(async (t) => {
+        try {
+          const res = await fetch(t.url)
+          results[t.name] = res.ok ? 'ok' : 'degraded'
+        } catch {
+          results[t.name] = 'down'
+        }
+      })
+    )
+    return { status: 'ok', services: results }
+  })
+
+  fastify.get('/api/governance/health', async () => {
+    try {
+      const res = await fetch(`${GOVERNANCE_URL}/health`)
+      return { status: res.ok ? 'ok' : 'degraded' }
+    } catch {
+      return { status: 'down' }
+    }
+  })
+
+  fastify.get('/api/identity/health', async () => {
+    try {
+      const res = await fetch(`${IDENTITY_SERVICE_URL}/health`)
+      return { status: res.ok ? 'ok' : 'degraded' }
+    } catch {
+      return { status: 'down' }
+    }
+  })
+
+  fastify.get('/api/discovery/health', async () => {
+    try {
+      const res = await fetch(`${RESOURCE_DISCOVERY_URL}/health`)
+      return { status: res.ok ? 'ok' : 'degraded' }
+    } catch {
+      return { status: 'down' }
+    }
+  })
 
   fastify.post('/api/v1/proposals', async (request, reply) => {
+    const body: any = request.body || {}
+    const proposalId = body.proposal_id || randomUUID()
+    const defaultDeadlineMs = 7 * 24 * 60 * 60 * 1000
+    const deadline = body.deadline || new Date(Date.now() + defaultDeadlineMs).toISOString()
+    const payload = {
+      proposal_id: proposalId,
+      title: body.title,
+      description: body.description,
+      deadline,
+      model: 'majority',
+      quorum: 0.5,
+      approval: 0.5
+    }
     const res = await fetch(`${GOVERNANCE_URL}/proposals`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(request.body)
+      body: JSON.stringify(payload)
     })
     const data = await res.json()
     reply.code(201).send(data)
@@ -21,10 +81,19 @@ export function buildApp() {
 
   fastify.post<{ Params: { id: string } }>('/api/v1/proposals/:id/vote', async (request, reply) => {
     const { id } = request.params
-    const res = await fetch(`${GOVERNANCE_URL}/proposals/${id}/vote`, {
+    const body: any = request.body || {}
+    const payload = {
+      proposal_id: id,
+      voter_id: body.voter_id,
+      vote: body.vote ?? body.vote_type,
+      vote_weight: body.vote_weight,
+      reasoning: body.reasoning,
+      delegate_to: body.delegate_to
+    }
+    const res = await fetch(`${GOVERNANCE_URL}/votes`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(request.body)
+      body: JSON.stringify(payload)
     })
     const data = await res.json()
     reply.send(data)
@@ -79,6 +148,23 @@ export function buildApp() {
 
   fastify.post<{ Params: { id: string } }>('/api/v1/resources/:id/request', async (request, reply) => {
     reply.code(202).send({ ok: true, resource_id: request.params.id })
+  })
+
+  // v1 and non-versioned resource discovery proxies
+  fastify.get('/api/resources', async (_request, reply) => {
+    const res = await fetch(`${RESOURCE_DISCOVERY_URL}/resources`)
+    const data = await res.json()
+    reply.send(data)
+  })
+
+  fastify.post('/api/resources', async (request, reply) => {
+    const res = await fetch(`${RESOURCE_DISCOVERY_URL}/resources`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(request.body)
+    })
+    const data = await res.json()
+    reply.code(201).send(data)
   })
 
   return fastify
