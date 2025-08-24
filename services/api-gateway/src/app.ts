@@ -68,7 +68,9 @@ export function buildApp() {
       deadline,
       model: 'majority',
       quorum: 0.5,
-      approval: 0.5
+      approval: 0.5,
+      initiator_id: body.initiator_id || 'system',
+      stakeholder_cooperatives: body.stakeholder_cooperatives || []
     }
     const res = await fetch(`${GOVERNANCE_URL}/proposals`, {
       method: 'POST',
