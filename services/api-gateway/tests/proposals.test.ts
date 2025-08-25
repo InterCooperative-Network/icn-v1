@@ -41,6 +41,25 @@ describe('API Gateway v1', () => {
     expect(body.ok).toBe(true)
   })
 
+  test('POST /api/v1/proposals/:id/vote falls back to /proposals/:id/vote on 404', async () => {
+    // @ts-ignore
+    global.fetch = jest.fn(async (url, init) => {
+      if ((url as string).endsWith('/votes')) {
+        return { status: 404, json: async () => ({ detail: 'Not Found' }) }
+      }
+      return { status: 200, json: async () => ({ ok: true, via: 'fallback' }) }
+    })
+    const app = buildApp()
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/v1/proposals/p-123/vote',
+      payload: { voter_id: 'm-1', vote_type: 'yes' }
+    })
+    expect(res.statusCode).toBe(200)
+    const body = JSON.parse(res.body)
+    expect(body.via).toBe('fallback')
+  })
+
   test('GET /api/resources proxies to resource discovery', async () => {
     // @ts-ignore
     global.fetch = jest.fn(async () => ({ json: async () => ({ resources: [], total_count: 0 }) }))

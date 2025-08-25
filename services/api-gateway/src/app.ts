@@ -78,7 +78,12 @@ export function buildApp() {
       body: JSON.stringify(payload)
     })
     const data = await res.json()
-    reply.code(201).send(data)
+    const normalized = {
+      id: (data && (data.id || data.proposal_id)) || proposalId,
+      proposal_id: (data && (data.proposal_id || data.id)) || proposalId,
+      ...data
+    }
+    reply.code(201).send(normalized)
   })
 
   fastify.post<{ Params: { id: string } }>('/api/v1/proposals/:id/vote', async (request, reply) => {
@@ -92,13 +97,28 @@ export function buildApp() {
       reasoning: body.reasoning,
       delegate_to: body.delegate_to
     }
-    const res = await fetch(`${GOVERNANCE_URL}/votes`, {
+    // Try current endpoint
+    let res = await fetch(`${GOVERNANCE_URL}/votes`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(payload)
     })
+    // Fallback for older engines
+    if ((res as any).status === 404) {
+      res = await fetch(`${GOVERNANCE_URL}/proposals/${id}/vote`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          voter_id: body.voter_id,
+          vote_type: body.vote ?? body.vote_type,
+          vote_weight: body.vote_weight,
+          reasoning: body.reasoning,
+          delegate_to: body.delegate_to
+        })
+      })
+    }
     const data = await res.json()
-    reply.send(data)
+    reply.code((res as any).status || 200).send(data)
   })
 
   fastify.get<{ Params: { id: string } }>('/api/v1/proposals/:id/results', async (request, reply) => {
