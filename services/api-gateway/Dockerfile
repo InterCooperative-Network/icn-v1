@@ -13,6 +13,6 @@ COPY --from=builder /app/dist ./dist
 COPY package.json package-lock.json* ./
 RUN npm ci --omit=dev || npm install --omit=dev
 EXPOSE 3000
-CMD ["node", "dist/index.js"]
+CMD ["node", "--experimental-specifier-resolution=node", "dist/index.js"]
 
 

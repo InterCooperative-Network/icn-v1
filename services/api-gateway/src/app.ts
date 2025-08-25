@@ -58,19 +58,20 @@ export function buildApp() {
 
   fastify.post('/api/v1/proposals', async (request, reply) => {
     const body: any = request.body || {}
-    const proposalId = body.proposal_id || randomUUID()
-    const defaultDeadlineMs = 7 * 24 * 60 * 60 * 1000
-    const deadline = body.deadline || new Date(Date.now() + defaultDeadlineMs).toISOString()
     const payload = {
-      proposal_id: proposalId,
       title: body.title,
       description: body.description,
-      deadline,
-      model: 'majority',
-      quorum: 0.5,
-      approval: 0.5,
-      initiator_id: body.initiator_id || 'system',
-      stakeholder_cooperatives: body.stakeholder_cooperatives || []
+      proposal_type: body.proposal_type ?? 'economic',
+      initiator_id: body.initiator_id ?? 'system',
+      stakeholder_cooperatives: body.stakeholder_cooperatives ?? [],
+      related_event_id: body.related_event_id ?? null,
+      voting_rules: {
+        governance_model: 'majority',
+        quorum_threshold: 0.5,
+        approval_threshold: 0.5,
+        voting_period_hours: 72,
+        delegate_voting_allowed: true
+      }
     }
     const res = await fetch(`${GOVERNANCE_URL}/proposals`, {
       method: 'POST',
@@ -79,11 +80,11 @@ export function buildApp() {
     })
     const data = await res.json()
     const normalized = {
-      id: (data && (data.id || data.proposal_id)) || proposalId,
-      proposal_id: (data && (data.proposal_id || data.id)) || proposalId,
+      id: data?.id ?? data?.proposal_id ?? '',
+      proposal_id: data?.proposal_id ?? data?.id ?? '',
       ...data
     }
-    reply.code(201).send(normalized)
+    reply.code((res as any).status || 200).send(normalized)
   })
 
   fastify.post<{ Params: { id: string } }>('/api/v1/proposals/:id/vote', async (request, reply) => {
