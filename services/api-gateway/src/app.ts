@@ -89,10 +89,12 @@ export function buildApp() {
   fastify.post<{ Params: { id: string } }>('/api/v1/proposals/:id/vote', async (request, reply) => {
     const { id } = request.params
     const body: any = request.body || {}
+    const raw = String(body.vote ?? body.vote_type ?? '').toLowerCase()
+    const normalizedVote = ({ yes: 'approve', no: 'reject', approve: 'approve', reject: 'reject', abstain: 'abstain' } as Record<string, string>)[raw] || raw
     const payload = {
       proposal_id: id,
       voter_id: body.voter_id,
-      vote: body.vote ?? body.vote_type,
+      vote: normalizedVote,
       vote_weight: body.vote_weight,
       reasoning: body.reasoning,
       delegate_to: body.delegate_to
@@ -110,7 +112,7 @@ export function buildApp() {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
           voter_id: body.voter_id,
-          vote_type: body.vote ?? body.vote_type,
+          vote_type: normalizedVote,
           vote_weight: body.vote_weight,
           reasoning: body.reasoning,
           delegate_to: body.delegate_to
